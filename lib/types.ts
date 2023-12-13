@@ -1,12 +1,12 @@
-export interface Prompt {
-    prompt: string;
-}
-
 export interface PromptResponse {
-    message: string;
+    response: string;
 }
 
 
 export interface InputPromptsProps {
 	message: string;
+}
+
+export interface ResponseBoxProps {
+	response: string;
 }
