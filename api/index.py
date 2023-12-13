@@ -24,12 +24,17 @@ def generate_questions():
         topic = data.get('topic', 'default topic')
 
         # Construct a prompt for OpenAI to generate questions
-        prompt = f"Create 5 suitable math questions for the topic '{topic}' that will cover all chapters and allow a student to ace their exam."
+
+        augmented_input = f"Based on the following request, perform the required action:\n\n{user_input}"
+
+        # Example of adding specific rules or context
+        augmented_input += "\n\nIf the request is for generating questions, create 5 suitable math questions that will cover the all chapter and allow him to ace his exam."
+        augmented_input += "\nIf the request is for correcting answers, provide the correct answers and explanations. The answers should be very detailed and similar to if they were handwritten"
 
         # Sending the prompt to the OpenAI API
         response = openai.Completion.create(
             model="gpt-4-1106-preview",
-            prompt=prompt,
+            prompt=augmented_input,
             max_tokens=500  # Adjust as needed
         )
 
@@ -48,37 +53,27 @@ def generate_questions():
 @app.route("/api/checkAnswers", methods=['POST'])
 def check_answers():
     try:
-        user_answers = request.json  # Assuming answers are sent as a JSON payload
-        corrections = {}
+        user_answers = request.json
 
+        # Construct a single prompt for all answers
+        prompt = "Provide detailed corrections and suggest additional exercises for the following questions and answers:\n\n"
         for question, user_answer in user_answers.items():
             expected_answer = questions_and_answers.get(question, "No answer available")
-            correction = generate_correction_and_exercise(question, user_answer, expected_answer)
-            corrections[question] = correction
+            prompt += f"Question: {question}\nUser Answer: {user_answer}\nExpected Answer: {expected_answer}\n\n"
 
-        return jsonify({"corrections": corrections})
+        response = openai.Completion.create(
+            model="gpt-4-1106-preview",
+            prompt=prompt,
+            max_tokens=1000
+        )
+
+        generated_response = response.choices[0].message.content if response.choices else "No response generated."
+
+        return jsonify({"corrections": generated_response})
 
     except Exception as e:
         return jsonify({"error": str(e)})
 
-def generate_correction_and_exercise(question, user_answer, expected_answer):
-    # Construct a prompt for OpenAI
-    prompt = f"Question: {question}\nUser Answer: {user_answer}\nExpected Answer: {expected_answer}\n\nProvide a detailed correction of the user's answer and suggest additional exercises for practice:"
-
-    try:
-        # Sending the prompt to the OpenAI API
-        response = openai.Completion.create(
-            model="gpt-4-1106-preview",
-            prompt=prompt,
-            max_tokens=200  # Adjust as needed
-        )
-
-        # Extracting the generated response
-        generated_response = response.choices[0].message.content if response.choices else "No response generated."
-
-        return generated_response
-    except Exception as e:
-        return f"Error generating correction: {str(e)}"
 
 if __name__ == "__main__":
     app.run(debug=True)
