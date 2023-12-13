@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 import openai
+import os
+from flask_cors import CORS
+
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
@@ -10,47 +16,39 @@ def process_message():
 
     return jsonify({"response": message+" bruhhh"})
 
-@app.route("/api/generateQuestions", methods=['GET'])
-def generate_questions():
+@app.route("/api/sendPrompt", methods=['POST'])
+def chatbot():
     try:
-        # Get the grade level and math topic from the request
-        grade_level = request.args.get('grade', 'middle school')
-        math_topic = request.args.get('topic', '')
+        # Get the user input from the request body
+        user_input = request.args['message']
+        print(user_input)
+        # Adding specific context or instructions to the user input
+        augmented_input = f"Based on the following request, perform the required action:\n\n{user_input}"
 
-        # Building the prompt to get a list of subtopics
-        topic_prompt = f"List subtopics for the math topic '{math_topic}' suitable for a {grade_level} student."
+        # Example of adding specific rules or context
+        augmented_input += "\n\nIf the request is for generating questions, create 5 suitable math questions that will cover the all chapter and allow him to ace his exam."
+        augmented_input += "\nIf the request is for correcting answers, provide the correct answers and explanations. The answers should be very detailed and similar to if they were handwritten"
 
-        # Generating the response for subtopics
-        topic_response = openai.Completion.create(
-            engine="text-davinci-004",  # or "gpt-4" based on your access
-            prompt=topic_prompt,
-            max_tokens=50
+        client = openai.OpenAI(api_key=api_key)
+        # Sending the augmented input to the OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4-1106-preview",
+            messages=[
+                {
+                    "role":"system",
+                    "content":f"{augmented_input}"
+                }
+            ] ,  # Using augmented input as prompt
+            max_tokens=1000
         )
 
-        subtopics = topic_response.choices[0].text.strip()
+        # Extracting the generated response
+        # generated_content = response.choices[0].text.strip() if response.choices else "No response generated."
 
-        questions = []
-        for _ in range(5):  # Adjust range for the desired number of questions
-            # Building the prompt for questions
-            question_prompt = f"Create a math question for {grade_level} students on the topic '{math_topic}'."
-
-            # Generating the response for questions
-            question_response = openai.Completion.create(
-                engine="text-davinci-004",  # or "gpt-4" based on your access
-                prompt=question_prompt,
-                max_tokens=100
-            )
-
-            question = question_response.choices[0].text.strip()
-            questions.append(question)
-
-        return jsonify({"subtopics": subtopics, "questions": questions})
+        return {"response": response.choices[0].message.content}
 
     except Exception as e:
         return jsonify({"error": str(e)})
-    
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
