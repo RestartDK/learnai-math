@@ -3,7 +3,7 @@ import openai
 
 app = Flask(__name__)
 
-@app.route("/api/test")
+@app.route("/api/test", methods=['POST'])
 def process_message():
     # Get data sent to the endpoint
     message = request.args['message']
