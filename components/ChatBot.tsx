@@ -1,15 +1,13 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sigma } from "lucide-react";
 import { User } from "lucide-react";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { sendPrompt } from "@/utils/sendPrompt";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Prompt, PromptResponse, ResponseBoxProps } from "@/lib/types";
+import { PromptResponse, ResponseBoxProps } from "@/lib/types";
 
 function ResponseBox({ response }: ResponseBoxProps) {
 	return (
@@ -23,41 +21,42 @@ function ResponseBox({ response }: ResponseBoxProps) {
 }
 
 export default function Chatbot() {
-	const queryClient = useQueryClient();
 	const [input, setInput] = useState<string>("");
-	const [responses, setResponses] = useState<PromptResponse[]>([]);
+	const [responses, setResponses] = useState<PromptResponse[]>([]);	// Because I got no db rn bruh
 
 	const mutationPrompt = useMutation({
-		mutationFn: ({ prompt }: Prompt) => {
-			return sendPrompt();
-		},
+		mutationFn: (promptData: string) => sendPrompt(promptData),
 		onSuccess: (data) => {
-			setResponses([...responses, data]);
-			console.log(responses);
+			setResponses(currentResponses => [...currentResponses, data]);
 		},
 		onError: (error) => {
-			// Handle error
 			console.log("Error: ", error);
 		},
 	});
-
+	
 	const handleSubmit = () => {
-		mutationPrompt.mutate({ prompt: input });
-		setInput("");
+		if (input.trim()) {
+			mutationPrompt.mutate(input);
+			setInput("");
+		}
 	};
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-between py-12">
 			<div className="flex flex-col md:w-1/2 w-full">
-				{responses.map((response) => (
-					<ResponseBox response={response.message} />
+				{responses.map((response, index) => (
+					<ResponseBox key={index} response={response.response} />
 				))}
 			</div>
 			<div className="flex md:w-1/2 w-full gap-2">
-				<Input className="border-gray-500 bg-transparent" />
+				<Input 
+					className="border-gray-500 bg-transparent flex-1" 
+					value={input} 
+					onChange={(e) => setInput(e.target.value)}
+				/>
 				<Button
 					className="bg-gray-500 hover:bg-gray-400"
-					onSubmit={() => handleSubmit}
+					onClick={handleSubmit}
 				>
 					<Sigma size={24} />
 				</Button>
