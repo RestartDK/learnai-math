@@ -3,11 +3,12 @@ import openai
 
 app = Flask(__name__)
 
-openai.api_key = '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'
+@app.route("/api/test")
+def process_message():
+    # Get data sent to the endpoint
+    message = request.args['message']
 
-@app.route("/api/python")
-def hello_world():
-    return "<p>Hello, World!</p>"
+    return jsonify({"response": message+" bruhhh"})
 
 @app.route("/api/generateQuestions", methods=['GET'])
 def generate_questions():
