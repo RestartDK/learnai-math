@@ -25,6 +25,7 @@ export default function Chatbot() {
 	const [responses, setResponses] = useState<PromptResponse[]>([]);	// Because I got no db rn bruh
 
 	const mutationPrompt = useMutation({
+		mutationKey: ["prompt"],
 		mutationFn: (promptData: string) => sendPrompt(promptData),
 		onSuccess: (data) => {
 			setResponses(currentResponses => [...currentResponses, data]);
