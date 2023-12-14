@@ -7,8 +7,6 @@
 
 <br/>
 
-![demo](https://github.com/RestartDK/learnai-math/assets/58006998/f15d1871-5052-48ee-b18f-d7776a519923)
-
 ## 📖 Overview
 
 LearnAI is an AI-powered chatbot designed to help users study mathematics in a personalized manner. Utilizing advanced technologies including Next.js, Flask, MongoDB, and the ChatGPT API, this chatbot provides a unique and interactive way to practice and master mathematical concepts.
